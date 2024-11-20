@@ -36,5 +36,5 @@ func main() {
   prometheus.MustRegister(collector)
 
   http.Handle("/metrics", promhttp.Handler())
-  log.Fatal(http.ListenAndServe(":9101", nil))
+  log.Fatal(http.ListenAndServe(":9102", nil))
 }
