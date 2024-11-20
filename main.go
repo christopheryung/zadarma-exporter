@@ -9,27 +9,28 @@ import (
 )
 
 type myCollector struct {
-  accountBalance *prometheus.GaugeVec
+  accountBalance prometheus.Gauge
 }
 
 func newCollector() *myCollector {
   return &myCollector{
-    accountBalance: prometheus.NewGaugeVec(prometheus.GaugeOpts{
+    accountBalance: prometheus.NewGauge(prometheus.GaugeOpts{
       Name: "account_balance",
       Help: "Zadarma account balance metric",
-    }, nil),
+    }),
   }
 }
 
 func (c *myCollector) Collect(ch chan<- prometheus.Metric) {
-  balance := 5
-  c.accountBalance.WithLabelValues().Set(float64(balance))
+  balance := 5.0
+  c.accountBalance.Set(balance)
+
+  ch <- c.accountBalance
 }
 
 func (c *myCollector) Describe(ch chan<- *prometheus.Desc) {
   c.accountBalance.Describe(ch)
 }
-
 func main() {
   collector := newCollector()
   prometheus.MustRegister(collector)
