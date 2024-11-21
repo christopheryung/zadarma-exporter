@@ -3,6 +3,7 @@ package main
 import (
 	"log"
 	"net/http"
+	"zadarma-exporter/api"
 
 	"github.com/prometheus/client_golang/prometheus"
 	"github.com/prometheus/client_golang/prometheus/promhttp"
@@ -22,15 +23,19 @@ func newCollector() *myCollector {
 }
 
 func (c *myCollector) Collect(ch chan<- prometheus.Metric) {
-  balance := 5.0
+  balance, err := api.GetBalance()
+  if err != nil {
+    log.Println(err)
+    return
+  }
   c.accountBalance.Set(balance)
-
   ch <- c.accountBalance
 }
 
 func (c *myCollector) Describe(ch chan<- *prometheus.Desc) {
   c.accountBalance.Describe(ch)
 }
+
 func main() {
   collector := newCollector()
   prometheus.MustRegister(collector)

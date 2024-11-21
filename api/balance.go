@@ -1,4 +1,4 @@
-package main
+package api
 
 import (
 	"crypto/hmac"
@@ -6,7 +6,10 @@ import (
 	"crypto/sha1"
 	"encoding/base64"
 	"encoding/hex"
+	"encoding/json"
 	"fmt"
+	"io"
+	"log"
 	"net/http"
 )
 
@@ -15,6 +18,11 @@ const (
   userKey = ""
   secretKey = ""
 )
+type Response struct {
+  Status string `json:"status"`
+  Balance float64 `json:"balance"`
+  Currency string `json:"currency"`
+}
 
 // Zadarma-specific algorithm to get Authorization header
 func getAuthorizationHeader() string {
@@ -31,11 +39,11 @@ func encodeSignature(signatureString, secret string) string {
 	return base64.StdEncoding.EncodeToString([]byte(hex.EncodeToString(hmacHash)))
 }
 
-func main() {
+func GetBalance() (float64, error) {
 	req, err := http.NewRequest("GET", apiURL, nil)
 	if err != nil {
-		fmt.Println("Error:", err)
-		return
+    log.Println(err)
+		return 0, err
 	}
 
   authorizationHeader := getAuthorizationHeader()
@@ -44,8 +52,17 @@ func main() {
 	client := &http.Client{}
 	resp, err := client.Do(req)
 	if err != nil {
-		fmt.Println("Error:", err)
-		return
+    log.Println(err)
+		return 0, err 
 	}
 	defer resp.Body.Close()
+
+  bodyBytes, _ := io.ReadAll(resp.Body)
+  var response Response
+  err = json.Unmarshal(bodyBytes, &response)
+  if err != nil {
+    log.Println(err)
+  }
+
+  return response.Balance, err
 }
