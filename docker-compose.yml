@@ -1,0 +1,18 @@
+services:
+  zadarama-exporter:
+    build: .
+    image: zadarama-exporter:latest
+    container_name: zadarama-exporter
+    secrets:
+      - user_key
+      - secret_key
+    ports:
+      - "9102:9102"
+    restart: unless-stopped
+
+
+secrets:
+  user_key:
+    file: user_key
+  secret_key:
+    file: secret_key
