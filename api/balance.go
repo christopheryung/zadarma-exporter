@@ -11,13 +11,14 @@ import (
 	"io"
 	"log"
 	"net/http"
+	"os"
+	"strings"
 )
 
 const (
   apiURL = "https://api.zadarma.com/v1/info/balance?format=json"
-  userKey = ""
-  secretKey = ""
 )
+
 type Response struct {
   Status string `json:"status"`
   Balance float64 `json:"balance"`
@@ -26,6 +27,7 @@ type Response struct {
 
 // Zadarma-specific algorithm to get Authorization header
 func getAuthorizationHeader() string {
+  userKey, secretKey := readSecrets()
   md5Hash := md5.Sum([]byte("format=json"))
   signature := fmt.Sprintf("/v1/info/balanceformat=json%s", hex.EncodeToString(md5Hash[:]))
   encodedSignature := encodeSignature(signature, secretKey)
@@ -39,6 +41,20 @@ func encodeSignature(signatureString, secret string) string {
 	return base64.StdEncoding.EncodeToString([]byte(hex.EncodeToString(hmacHash)))
 }
 
+func readSecrets() (string, string) {
+  userKey, err := os.ReadFile("/run/secrets/user_key")
+  if err != nil {
+    log.Fatal(err)
+  }
+
+  secretKey, err := os.ReadFile("/run/secrets/secret_key")
+  if err != nil {
+    log.Fatal(err)
+  }
+
+  return strings.TrimSpace(string(userKey)), strings.TrimSpace(string(secretKey))
+}
+
 func GetBalance() (float64, error) {
 	req, err := http.NewRequest("GET", apiURL, nil)
 	if err != nil {
@@ -47,6 +63,7 @@ func GetBalance() (float64, error) {
 	}
 
   authorizationHeader := getAuthorizationHeader()
+  fmt.Println(authorizationHeader)
 	req.Header.Set("Authorization", authorizationHeader)
 
 	client := &http.Client{}
